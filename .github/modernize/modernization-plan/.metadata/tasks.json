@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Tasks template for the SupplyChain Worker messaging modernization plan.",
+  "tasks": [
+    {
+      "type": "setupBaseline",
+      "id": "001-setupBaseline",
+      "description": "Capture the current application state and define the frozen verification baseline.",
+      "requirements": "Snapshot the application's main source directory, src/main/java, before the migration. Produce the frozen test specification and dependency real/mock decision table for integration verification. Use mocked dependencies because no Azure test infrastructure is provided.",
+      "successCriteria": {
+        "passBuild": "true",
+        "passUnitTests": "true"
+      }
+    },
+    {
+      "type": "transform",
+      "id": "002-transform-rabbitmq-to-servicebus",
+      "description": "Move the worker's notification messaging from RabbitMQ to Azure Service Bus.",
+      "reason": "The project documents RabbitMQ as legacy messaging and identifies Azure Service Bus as its modernization target.",
+      "requirements": "Migrate the order-created, inventory-alert, and approval-pending consumers and their messaging configuration from RabbitMQ to Azure Service Bus. Preserve the existing notification-processing responsibilities and use managed identity for Azure authentication. Do not include an application runtime upgrade or deployment.",
+      "skills": [
+        {
+          "name": "migration-amqp-rabbitmq-servicebus",
+          "location": "builtin"
+        },
+        {
+          "name": "migration-mi-servicebus",
+          "location": "builtin"
+        }
+      ],
+      "successCriteria": {
+        "passBuild": "true",
+        "passUnitTests": "true"
+      }
+    },
+    {
+      "type": "integrationTest",
+      "id": "003-integrationTest",
+      "description": "Build integration tests for migrated Azure services and run post-migration verification",
+      "requirements": "Use mocked dependencies and the frozen baseline specification to verify the migrated order-created, inventory-alert, and approval-pending message-processing flows.",
+      "dependencies": [
+        "001-setupBaseline",
+        "002-transform-rabbitmq-to-servicebus"
+      ]
+    },
+    {
+      "type": "security",
+      "id": "004-security-cve-remediation",
+      "description": "Scan project dependencies for known CVEs and remediate identified vulnerabilities.",
+      "requirements": "Scan all project dependencies for known CVEs and upgrade vulnerable dependencies to minimum patched versions. If remediation requires a major version upgrade, document the affected dependency, current and upgraded versions, and breaking-change risk. Verify the project builds and all tests pass.",
+      "successCriteria": {
+        "passBuild": "true",
+        "passUnitTests": "true"
+      },
+      "dependencies": [
+        "002-transform-rabbitmq-to-servicebus"
+      ]
+    }
+  ],
+  "metadata": {
+    "planName": "modernization-plan",
+    "projectName": "SupplyChain Worker",
+    "language": "java",
+    "createdAt": "2026-11-09T10:26:53Z",
+    "version": "1.0"
+  }
+}
